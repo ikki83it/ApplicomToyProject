@@ -28,16 +28,19 @@ class EventController extends BaseController {
 
       public function getFilterEvents($name, $dstat, $end) {
           $arrFiltri = [];
-          if($this->validateDate($dstat) && $this->validateDate($end)){
-              $arrayDateStart = ['date', '>=', $dstat];
-              $arrayDateEnd = ['date', '<=', $end];
-            array_push($arrFiltri,arrayDateStart,arrayDateEnd);
+          $arrayDateStart = [];
+          $arrayDateEnd = [];
+          $arrayName = [];
+          if($dstat!='' && $end!=''){
+              $arrayDateStart = array('date', '>=', $dstat);
+              $arrayDateEnd = array('date', '<=', $end);
+            array_push($arrFiltri,$arrayDateStart,$arrayDateEnd);
           }
           if($name != ''){
-            array_push($arrFiltri,['name', '=', $name]);
+            $arrayName = array('name', '=', $name);
           }
-          if (Event::where(array_push)->exists()) {
-            $event = Event::where(array_push)->get()->toJson(JSON_PRETTY_PRINT);
+          if (Event::where([$arrayName, $arrayDateStart, $arrayDateEnd])->exists()) {
+            $event = Event::where([$arrayName, $arrayDateStart, $arrayDateEnd])->get()->toJson(JSON_PRETTY_PRINT);
             return response($event, 200);
           } else {
             return response()->json([

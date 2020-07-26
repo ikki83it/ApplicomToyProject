@@ -2,11 +2,21 @@
 <html>
 <head>
   <title>My first Vue app</title>
+  <link rel="stylesheet" type="text/css" media="all" href="daterangepicker.css" />
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+
+  <script type="text/javascript" src="daterangepicker.js"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/vue.resource/1.0.3/vue-resource.min.js"></script>
+
+   
   
 </head>
 <body>
@@ -35,15 +45,17 @@
         <button class="btn btn-primary mt-3 mb-5" v-on:click="submitForm">Send</button>
     <!--  </form> -->
       <div class="row">
-        <div class="cols ">
+        <div class="cols mr-5">
           <label for="eventName">Filter name</label>
-          <input type="text"  class="form-control " id="filterName" placeholder="Enter name">
+          <input type="text"  class="form-control " id="filterName" v-model="filterName" placeholder="Enter name">
         </div>
-        <div class="cols ">
+        <div class="cols mr-5">
           <label for="eventDate">Filter Date</label>
-          <input type="date" class="form-control" id="filterDate">
+          <!-- <input type="text" class="form-control" id="dataRange" name="dataRange" value="" /> -->
+          <input type="date" class="form-control" id="dataRangeStart" v-model="filterDateStart"  value="" />
+          <input type="date" class="form-control" id="dataRangeEnd"  v-model="filterDateEnd" value="" />
         </div>
-        <div class="cols ">
+        <div class="cols mt-2">
           <button class="btn btn-primary mt-4 mb-5" v-on:click="filterList">Filter</button>
         </div>
       </div>
@@ -63,6 +75,22 @@
     </div>
 
   <script>
+ $(document).ready(function() {
+  $('#dataRange').daterangepicker({
+    startDate: new Date(), endDate: new Date(),
+    opens: 'left'
+  }, function(start, end, label) {
+    console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+    this.filterDateStart = start.format('YYYY-MM-DD');
+    this.filterDateEnd = end.format('YYYY-MM-DD');
+  });
+ });
+
+ $('#daterange').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+      this.filterDateStart = '12'
+  });
+
 
     var app = new Vue({
       el: '#app',
@@ -70,7 +98,10 @@
         nameEvent: '',
         dateEvent:'',
         checkyear:0,
-        getEvent:''
+        getEvent:'',
+        filterName:'',
+        filterDateStart:'',
+        filterDateEnd:''
       },
       created: function () {
         this.fetchData();
@@ -104,7 +135,22 @@
                 })
               }, 
               filterList:function(){
+                var self=this;
+                
+                this.$http.get('http://localhost:8000/api/eventsFil/'+this.filterName+'/'+this.filterDateStart+'/'+this.filterDateEnd).then(function(response){
+                if(response.status == "200"){
+                    console.log(response);
+                    self.getEvent = JSON.parse(response).body.sort(function(a, b){
+                      a = a.date.split('/').reverse().join('');
+                      b = b.date.split('/').reverse().join('');
+                      return a > b ? 1 : a < b ? -1 : 0;     
+                  }); // use self instead of this
+                    
+                }
 
+                },err =>{
+                    console.log(err)
+                })
               }
             }
           })
@@ -112,7 +158,7 @@
    
   </script>
 
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </body>
